@@ -80,13 +80,14 @@ body::before{
 }
 .btn:hover{background:rgba(255,255,255,.12)}
 .btn:active{transform:scale(.97)}
-.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .btn.primary{
   color:#1a1000;border:0;
   background:linear-gradient(135deg,#ffe066,var(--gold) 55%,#ffb300);
   box-shadow:0 6px 22px rgba(255,204,0,.35);
 }
 .btn.primary:hover{box-shadow:0 8px 30px rgba(255,204,0,.55)}
+.btn.primary:disabled{box-shadow:none}
 .btn.sm{padding:8px 14px;font-size:.85rem;border-radius:12px}
 .btn.danger{color:var(--danger);border-color:rgba(255,93,115,.35)}
 .input{
@@ -136,6 +137,13 @@ main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:20px 16px calc(24p
   background:radial-gradient(circle at 50% 40%,rgba(255,204,0,.08),transparent 60%);
 }
 .placeholder i{font-size:clamp(2rem,9vw,3.2rem);color:var(--gold);opacity:.85;filter:drop-shadow(0 0 14px rgba(255,204,0,.5))}
+
+.controls{
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  padding:10px;border-radius:var(--radius);direction:ltr;
+}
+.controls .play{min-width:140px;font-size:1rem;padding:12px 26px}
+
 .loadbar{display:flex;gap:10px;padding:10px;border-radius:var(--radius);align-items:center}
 .loadbar .input{direction:ltr;text-align:left}
 .roominfo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-radius:var(--radius);font-size:.9rem}
@@ -188,7 +196,7 @@ main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:20px 16px calc(24p
   .top-actions .btn .lbl{display:none}
   main.in-room{padding:0 0 calc(16px + env(safe-area-inset-bottom))}
   .video-frame{border-radius:0;border-inline:0}
-  .loadbar,.roominfo,.hint{margin-inline:12px}
+  .controls,.loadbar,.roominfo,.hint{margin-inline:12px}
   .loadbar{flex-wrap:wrap}
   .loadbar .btn{flex:1}
   .chat{left:0;right:0;bottom:0;width:100%;height:62dvh;border-radius:22px 22px 0 0;border-bottom:0}
@@ -235,10 +243,19 @@ main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:20px 16px calc(24p
       <div id="bigCode" class="big-code">-----</div>
       <div class="muted"><i class="fa-solid fa-spinner fa-spin-pulse"></i> در انتظار ورود مهمان...</div>
       <div class="row">
+        <button id="shareBtn" class="btn sm primary" hidden><i class="fa-solid fa-share-nodes"></i> اشتراک‌گذاری</button>
         <button id="copyCodeBtn" class="btn sm"><i class="fa-regular fa-copy"></i> کپی کد</button>
         <button id="copyLinkBtn" class="btn sm"><i class="fa-solid fa-link"></i> کپی لینک دعوت</button>
         <button id="cancelBtn" class="btn sm danger"><i class="fa-solid fa-xmark"></i> لغو</button>
       </div>
+      <div class="hint">اگر برای ارسال کد از صفحه خارج می‌شوید، زود برگردید؛ اتاق خودکار دوباره فعال می‌شود. مهمان فقط وقتی می‌تواند وارد شود که این صفحه فعال باشد.</div>
+    </div>
+
+    <div id="joining" class="host-wait glass" hidden>
+      <div class="muted">در حال اتصال به اتاق</div>
+      <div id="joinCode" class="big-code">-----</div>
+      <div class="muted"><i class="fa-solid fa-spinner fa-spin-pulse"></i> لطفاً چند لحظه صبر کنید...</div>
+      <button id="cancelJoinBtn" class="btn sm danger"><i class="fa-solid fa-xmark"></i> لغو</button>
     </div>
   </section>
 
@@ -254,15 +271,24 @@ main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:20px 16px calc(24p
         </div>
       </div>
 
+      <div class="controls glass">
+        <button id="seekBackBtn" class="btn sm" disabled aria-label="۱۰ ثانیه عقب"><i class="fa-solid fa-backward"></i> ۱۰ ثانیه</button>
+        <button id="playBtn" class="btn primary play" disabled><i class="fa-solid fa-play"></i><span>پخش</span></button>
+        <button id="seekFwdBtn" class="btn sm" disabled aria-label="۱۰ ثانیه جلو">۱۰ ثانیه <i class="fa-solid fa-forward"></i></button>
+        <button id="syncBtn" class="btn sm" disabled><i class="fa-solid fa-rotate"></i> همگام‌سازی زمان</button>
+      </div>
+      <div id="ctrlHint" class="hint" hidden></div>
+
       <div class="loadbar glass">
         <input id="videoInput" class="input" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" aria-label="لینک ویدیو">
-        <button id="loadBtn" class="btn primary"><i class="fa-solid fa-play"></i> پخش برای همه</button>
+        <button id="loadBtn" class="btn primary"><i class="fa-solid fa-play"></i> بارگذاری برای همه</button>
       </div>
       <div class="hint">پشتیبانی: youtube.com/watch?v= ، youtu.be/ ، youtube.com/embed/ و aparat.com/v/</div>
 
       <div class="roominfo glass">
         <span><i class="fa-solid fa-key" style="color:var(--gold)"></i> کد اتاق: <b id="roomCodeInfo">-----</b></span>
         <div class="row">
+          <button id="shareBtn2" class="btn sm primary" hidden><i class="fa-solid fa-share-nodes"></i> اشتراک‌گذاری</button>
           <button id="copyCodeBtn2" class="btn sm"><i class="fa-regular fa-copy"></i> کپی کد</button>
           <button id="copyLinkBtn2" class="btn sm"><i class="fa-solid fa-link"></i> لینک دعوت</button>
         </div>
@@ -295,16 +321,35 @@ main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:20px 16px calc(24p
 'use strict';
 
 const PREFIX = 'film2taii-';
+const SESSION_KEY = 'film2taii-session';
+const BEAT_MS = 4000;
+const BEAT_TIMEOUT = 20000;
+const GUEST_PATIENCE = 120000;
+const MAX_TRIES = 12;
+const MAX_GUESTS = 10;
+const FATAL = new Set(['browser-incompatible', 'invalid-id', 'invalid-key', 'ssl-unavailable']);
+
 const $ = s => document.querySelector(s);
 const el = {
-  main:$('#main'), lobby:$('#lobby'), lobbyMain:$('#lobbyMain'), hostWait:$('#hostWait'), room:$('#room'),
+  main:$('#main'), lobby:$('#lobby'), lobbyMain:$('#lobbyMain'), hostWait:$('#hostWait'), joining:$('#joining'), room:$('#room'),
   status:$('#status'), leave:$('#leaveBtn'), create:$('#createBtn'), join:$('#joinBtn'), codeInput:$('#codeInput'),
-  bigCode:$('#bigCode'), roomCodeInfo:$('#roomCodeInfo'), player:$('#player'), videoInput:$('#videoInput'),
-  loadBtn:$('#loadBtn'), chat:$('#chat'), fab:$('#chatFab'), badge:$('#badge'), msgs:$('#msgs'),
-  chatInput:$('#chatInput'), chatSend:$('#chatSend'), toasts:$('#toasts')
+  bigCode:$('#bigCode'), joinCode:$('#joinCode'), roomCodeInfo:$('#roomCodeInfo'), player:$('#player'),
+  videoInput:$('#videoInput'), loadBtn:$('#loadBtn'),
+  playBtn:$('#playBtn'), seekBack:$('#seekBackBtn'), seekFwd:$('#seekFwdBtn'), syncBtn:$('#syncBtn'), ctrlHint:$('#ctrlHint'),
+  chat:$('#chat'), fab:$('#chatFab'), badge:$('#badge'), msgs:$('#msgs'),
+  chatInput:$('#chatInput'), chatSend:$('#chatSend'), toasts:$('#toasts'),
+  share1:$('#shareBtn'), share2:$('#shareBtn2')
 };
 
-const st = { peer:null, role:null, code:null, conns:[], hostConn:null, inRoom:false, url:'', seq:0, timer:null, unread:0, chatOpen:false };
+const st = {
+  peer:null, role:null, code:null, gid:null,
+  conns:[], hostConn:null,
+  inRoom:false, closing:false, resumed:false, fresh:false,
+  url:'', kind:null, playing:false, pending:null, mute:0, needState:false,
+  seq:0, unread:0, chatOpen:false, tries:0, lostAt:0
+};
+const yt = { frame:null, ready:false, state:-1, time:0, timeAt:0, hs:null };
+const T = { sig:null, conn:null, retry:null, restart:null, verify:null, beat:null };
 const PLACEHOLDER = el.player.innerHTML;
 
 /* ---------- Helpers ---------- */
@@ -317,13 +362,16 @@ function genCode(){
   crypto.getRandomValues(a);
   return String(10000 + (a[0] % 90000));
 }
+function genGid(){
+  return Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('');
+}
 
 function toast(msg, type = ''){
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
   el.toasts.appendChild(t);
-  setTimeout(() => t.remove(), 3200);
+  setTimeout(() => t.remove(), 3400);
 }
 
 async function copyText(text, okMsg){
@@ -341,6 +389,23 @@ async function copyText(text, okMsg){
 const inviteLink = () => location.href.split('#')[0] + '#' + st.code;
 const safeSend = (c, d) => { try { if (c && c.open) c.send(d); } catch {} };
 const broadcast = (d, except) => st.conns.forEach(c => { if (c !== except) safeSend(c, d); });
+const closeQuiet = c => { try { c && c.close(); } catch {} };
+
+/* Session (only for resuming the same room after the browser reloads the page; not authentication) */
+const sess = {
+  save(){
+    if (!st.role || !st.code) return;
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role:st.role, code:st.code, gid:st.gid, url:st.url })); } catch {}
+  },
+  clear(){ try { sessionStorage.removeItem(SESSION_KEY); } catch {} },
+  load(){
+    try {
+      const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+      if (s && /^\d{5}$/.test(s.code) && (s.role === 'host' || s.role === 'guest')) return s;
+    } catch {}
+    return null;
+  }
+};
 
 /* ---------- Status badge ---------- */
 function setStatus(mode){
@@ -353,6 +418,9 @@ function setStatus(mode){
   } else if (mode === 'waiting'){
     b.classList.add('status-wait');
     b.innerHTML = `<i class="fa-solid fa-hourglass-half fa-fade"></i> ${st.role === 'host' ? 'در انتظار مهمان...' : 'در انتظار میزبان...'}`;
+  } else if (mode === 'reconnecting'){
+    b.classList.add('status-wait');
+    b.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> در حال اتصال مجدد...';
   } else if (mode === 'off'){
     b.classList.add('status-off');
     b.innerHTML = '<i class="fa-solid fa-plug-circle-xmark"></i> ارتباط قطع شد';
@@ -365,11 +433,20 @@ function setStatus(mode){
 function showLobby(){
   st.inRoom = false;
   el.lobby.hidden = false; el.room.hidden = true;
-  el.lobbyMain.hidden = false; el.hostWait.hidden = true;
+  el.lobbyMain.hidden = false; el.hostWait.hidden = true; el.joining.hidden = true;
   el.main.classList.remove('in-room');
   el.leave.hidden = true;
   el.chat.hidden = true; el.fab.hidden = true;
   el.create.disabled = false; el.join.disabled = false;
+  updateControls(); updatePlayBtn();
+}
+function showHostWait(){
+  el.lobbyMain.hidden = true; el.joining.hidden = true; el.hostWait.hidden = false;
+  el.bigCode.textContent = st.code;
+}
+function showJoining(){
+  el.lobbyMain.hidden = true; el.hostWait.hidden = true; el.joining.hidden = false;
+  el.joinCode.textContent = st.code;
 }
 
 function enterRoom(){
@@ -380,9 +457,9 @@ function enterRoom(){
   el.roomCodeInfo.textContent = st.code;
   el.leave.hidden = false;
   st.unread = 0; el.badge.hidden = true;
+  if (st.url && !el.player.querySelector('iframe')) applyVideo(st.url);
   setChat(window.matchMedia('(min-width:761px)').matches);
-  setStatus('online');
-  addMsg(st.role === 'host' ? 'مهمان وارد اتاق شد. تماشای خوبی داشته باشید!' : 'به اتاق متصل شدید.', 'sys');
+  updateControls();
   window.scrollTo({ top:0 });
 }
 
@@ -428,6 +505,7 @@ function addMsg(text, kind, from){
 function sendChat(){
   const m = el.chatInput.value.trim().slice(0, 500);
   if (!m || !st.inRoom) return;
+  if (st.role === 'guest' && !(st.hostConn && st.hostConn.open)) return toast('ارتباط برقرار نیست؛ در حال اتصال مجدد...', 'err');
   el.chatInput.value = '';
   addMsg(m, 'me');
   if (st.role === 'host') broadcast({ type:'chat', message:m, from:'میزبان' });
@@ -440,25 +518,34 @@ function parseVideo(raw){
   const u = String(raw || '').trim();
   if (!u) return null;
   let m = u.match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i);
-  if (m) return { src:`https://www.youtube.com/embed/${m[1]}`, name:'یوتیوب' };
-  m = u.match(/aparat\.com\/v\/([\w]+)/i) || u.match(/aparat\.com\/video\/video\/embed\/videohash\/([\w]+)/i);
-  if (m) return { src:`https://www.aparat.com/video/video/embed/videohash/${m[1]}/vt/frame`, name:'آپارات' };
+  if (m){
+    let src = `https://www.youtube.com/embed/${m[1]}?enablejsapi=1&rel=0&playsinline=1`;
+    if (/^https?:$/.test(location.protocol)) src += '&origin=' + encodeURIComponent(location.origin);
+    return { src, name:'یوتیوب', kind:'yt' };
+  }
+  m = u.match(/aparat\.com\/v\/(\w+)/i) || u.match(/aparat\.com\/video\/video\/embed\/videohash\/(\w+)/i);
+  if (m) return { src:`https://www.aparat.com/video/video/embed/videohash/${m[1]}/vt/frame`, name:'آپارات', kind:'aparat' };
   return null;
 }
 
 function applyVideo(url){
   const p = parseVideo(url);
   if (!p) return null;
-  st.url = url;
+  clearInterval(yt.hs); clearTimeout(T.verify);
+  st.url = url; st.kind = p.kind; st.playing = false; st.pending = null; st.mute = 0;
+  Object.assign(yt, { ready:false, state:-1, time:0, timeAt:0, frame:null });
   el.player.innerHTML = '';
   const f = document.createElement('iframe');
-  f.src = p.src;
   f.title = 'Film2Taii Player';
   f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-write';
   f.allowFullscreen = true;
   f.referrerPolicy = 'strict-origin-when-cross-origin';
+  if (p.kind === 'yt'){ yt.frame = f; f.addEventListener('load', ytListen); }
+  f.src = p.src;
   el.player.appendChild(f);
   el.videoInput.value = url;
+  sess.save();
+  updateControls(); updatePlayBtn();
   return p;
 }
 
@@ -468,37 +555,465 @@ function loadVideo(){
   const p = applyVideo(url);
   if (!p) return toast('لینک نامعتبر است. فقط یوتیوب و آپارات پشتیبانی می‌شود.', 'err');
   addMsg(`ویدیوی ${p.name} برای همه بارگذاری شد.`, 'sys');
-  if (st.role === 'host') broadcast({ type:'video', url });
-  else safeSend(st.hostConn, { type:'video', url });
+  const msg = { type:'video', url, reload:true };
+  if (st.role === 'host') broadcast(msg); else safeSend(st.hostConn, msg);
+}
+
+/* ---------- Synchronized playback (YouTube via postMessage API) ---------- */
+const curTime = () => yt.state === 1 ? yt.time + (Date.now() - yt.timeAt) / 1000 : yt.time;
+
+function ytRaw(o){
+  const f = yt.frame;
+  if (f && f.contentWindow){
+    try { f.contentWindow.postMessage(JSON.stringify(o), 'https://www.youtube.com'); } catch {}
+  }
+}
+const ytCmd = (func, args) => ytRaw({ event:'command', func, args:args || [] });
+
+function ytListen(){
+  clearInterval(yt.hs);
+  let n = 0;
+  yt.hs = setInterval(() => {
+    if (yt.ready || ++n > 60){ clearInterval(yt.hs); return; }
+    ytRaw({ event:'listening', id:1, channel:'widget' });
+  }, 400);
+}
+
+window.addEventListener('message', e => {
+  if (e.origin !== 'https://www.youtube.com') return;
+  if (!yt.frame || e.source !== yt.frame.contentWindow) return;
+  let d = e.data;
+  if (typeof d === 'string'){ try { d = JSON.parse(d); } catch { return; } }
+  if (!d || typeof d !== 'object') return;
+  if (!yt.ready){ yt.ready = true; clearInterval(yt.hs); onYtReady(); }
+  const info = d.info;
+  if (d.event === 'onStateChange' && typeof info === 'number'){
+    onYtState(info);
+  } else if ((d.event === 'infoDelivery' || d.event === 'initialDelivery') && info && typeof info === 'object'){
+    if (typeof info.currentTime === 'number'){ yt.time = info.currentTime; yt.timeAt = Date.now(); }
+    if (typeof info.playerState === 'number') onYtState(info.playerState);
+  }
+});
+
+function onYtReady(){
+  updateControls();
+  const p = st.pending;
+  st.pending = null;
+  if (p) applyPlayback(p);
+}
+
+/* A change made inside the player itself (native YouTube controls) */
+function onYtState(s){
+  if (s === yt.state) return;
+  yt.state = s;
+  if (s !== 1 && s !== 2) return;
+  if (Date.now() < st.mute) return;          // caused by a remote command, don't echo it back
+  const playing = s === 1;
+  if (playing === st.playing) return;
+  st.playing = playing;
+  updatePlayBtn();
+  sendPlayback();
+}
+
+function sendPlayback(time){
+  const msg = { type:'playback', playing:st.playing, time: time != null ? time : curTime() };
+  if (st.role === 'host') broadcast(msg); else safeSend(st.hostConn, msg);
+}
+
+function applyPlayback(p){
+  if (st.kind !== 'yt' || !yt.frame) return;
+  st.playing = p.playing;
+  updatePlayBtn();
+  if (!yt.ready){ st.pending = p; return; }
+  st.mute = Date.now() + 1500;
+  const drift = Math.abs(curTime() - p.time);
+  if (drift > 1.2 || (!p.playing && drift > 0.3)){
+    ytCmd('seekTo', [p.time, true]);
+    yt.time = p.time; yt.timeAt = Date.now();
+  }
+  ytCmd(p.playing ? 'playVideo' : 'pauseVideo');
+  if (p.playing) verifyPlayback();
+}
+
+function verifyPlayback(){
+  clearTimeout(T.verify);
+  T.verify = setTimeout(() => {
+    if (!st.playing || yt.state === 1 || yt.state === 3) return;
+    ytCmd('playVideo');
+    T.verify = setTimeout(() => {
+      if (st.playing && yt.state !== 1 && yt.state !== 3)
+        toast('مرورگر پخش خودکار را مسدود کرد؛ دکمه پخش را بزنید.', 'err');
+    }, 1500);
+  }, 1200);
+}
+
+function controllable(){
+  if (!(st.inRoom && st.kind === 'yt' && yt.ready)) return false;
+  if (st.role === 'guest' && !(st.hostConn && st.hostConn.open)){
+    toast('ارتباط برقرار نیست؛ در حال اتصال مجدد...', 'err');
+    return false;
+  }
+  return true;
+}
+
+function togglePlay(){
+  if (!controllable()) return;
+  const want = yt.state === 3 ? !st.playing : yt.state !== 1;
+  st.playing = want;
+  ytCmd(want ? 'playVideo' : 'pauseVideo');
+  updatePlayBtn();
+  sendPlayback();
+  if (want) verifyPlayback();
+}
+
+function seekBy(delta){
+  if (!controllable()) return;
+  const t = Math.max(0, curTime() + delta);
+  ytCmd('seekTo', [t, true]);
+  yt.time = t; yt.timeAt = Date.now();
+  sendPlayback(t);
+}
+
+function syncNow(){
+  if (!controllable()) return;
+  sendPlayback();
+  toast('زمان‌بندی برای همه همگام شد', 'ok');
+}
+
+function updatePlayBtn(){
+  el.playBtn.innerHTML = st.playing
+    ? '<i class="fa-solid fa-pause"></i><span>توقف</span>'
+    : '<i class="fa-solid fa-play"></i><span>پخش</span>';
+}
+
+function updateControls(){
+  const ok = st.inRoom && st.kind === 'yt' && !!yt.frame && yt.ready;
+  [el.playBtn, el.seekBack, el.seekFwd, el.syncBtn].forEach(b => { b.disabled = !ok; });
+  let hint = '';
+  if (!st.url) hint = 'ابتدا یک ویدیو بارگذاری کنید تا دکمه‌های کنترل فعال شوند.';
+  else if (st.kind === 'aparat') hint = 'کنترل هماهنگ پخش/توقف فقط برای ویدیوهای یوتیوب فعال است. برای آپارات هر نفر باید از دکمه‌های داخل خود پلیر استفاده کند.';
+  else if (!yt.ready) hint = 'در حال آماده‌سازی پلیر...';
+  el.ctrlHint.textContent = hint;
+  el.ctrlHint.hidden = !hint;
 }
 
 /* ---------- P2P data handling ---------- */
 function onData(d, conn){
+  conn._seen = Date.now();
   if (!d || typeof d !== 'object') return;
-  if (d.type === 'chat' && typeof d.message === 'string'){
-    const msg = d.message.slice(0, 500);
-    if (st.role === 'host'){
-      const from = conn._label || 'مهمان';
-      addMsg(msg, 'them', from);
-      broadcast({ type:'chat', message:msg, from }, conn);
-    } else {
-      addMsg(msg, 'them', String(d.from || 'میزبان').slice(0, 30));
+  switch (d.type){
+    case 'ping': return;
+
+    case 'chat': {
+      if (typeof d.message !== 'string') return;
+      const msg = d.message.slice(0, 500);
+      if (st.role === 'host'){
+        const from = conn._label || 'مهمان';
+        addMsg(msg, 'them', from);
+        broadcast({ type:'chat', message:msg, from }, conn);
+      } else {
+        addMsg(msg, 'them', String(d.from || 'میزبان').slice(0, 30));
+      }
+      return;
     }
-  } else if (d.type === 'video' && typeof d.url === 'string'){
-    const p = applyVideo(d.url);
-    if (!p) return;
-    addMsg(`ویدیوی ${p.name} بارگذاری شد.`, 'sys');
-    if (st.role === 'host') broadcast({ type:'video', url:d.url }, conn);
+
+    case 'sys':
+      if (st.role === 'guest' && typeof d.message === 'string') addMsg(d.message.slice(0, 200), 'sys');
+      return;
+
+    case 'video': {
+      if (typeof d.url !== 'string' || d.url.length > 500) return;
+      const same = d.url === st.url && !d.reload && el.player.querySelector('iframe');
+      if (same) return;
+      const p = applyVideo(d.url);
+      if (!p) return;
+      addMsg(`ویدیوی ${p.name} بارگذاری شد.`, 'sys');
+      if (st.role === 'host') broadcast({ type:'video', url:d.url, reload:!!d.reload }, conn);
+      return;
+    }
+
+    case 'playback': {
+      const p = { playing:!!d.playing, time:Math.max(0, Number(d.time) || 0) };
+      applyPlayback(p);
+      if (st.role === 'host') broadcast({ type:'playback', playing:p.playing, time:p.time }, conn);
+      return;
+    }
+
+    case 'req-state':
+      if (st.role === 'guest' && st.kind === 'yt' && yt.ready) sendPlayback();
+      return;
+
+    case 'bye':
+      if (st.role === 'host') { if (conn._gone) conn._gone(); }
+      else leave('میزبان اتاق را ترک کرد.');
+      return;
   }
 }
 
+/* ---------- Heartbeat (detects dead connections) ---------- */
+function startBeat(){
+  clearInterval(T.beat);
+  T.beat = setInterval(() => {
+    const list = st.role === 'host' ? st.conns.slice() : (st.hostConn ? [st.hostConn] : []);
+    const t = Date.now();
+    list.forEach(c => {
+      if (!c.open) return;
+      safeSend(c, { type:'ping' });
+      if (!document.hidden && t - (c._seen || t) > BEAT_TIMEOUT){
+        closeQuiet(c);
+        if (st.role === 'host'){ if (c._gone) c._gone(); }
+        else handleGuestLost(c);
+      }
+    });
+  }, BEAT_MS);
+}
+
+/* ---------- Signaling recovery (keeps the room alive when the tab is backgrounded) ---------- */
+function recoverSignaling(peer){
+  if (st.closing || peer !== st.peer || peer.destroyed) return;
+  clearTimeout(T.sig);
+  const attempt = () => {
+    if (st.closing || peer !== st.peer || peer.destroyed) return;
+    if (!peer.disconnected) return;
+    try { peer.reconnect(); } catch {}
+    T.sig = setTimeout(attempt, 2500);
+  };
+  attempt();
+}
+
+function dropPeer(p){
+  if (st.peer === p) st.peer = null;
+  try { p.destroy(); } catch {}
+}
+
+/* ---------- HOST ---------- */
+function startHost(code, resumed){
+  st.closing = false; st.role = 'host'; st.code = code;
+  st.fresh = !resumed; st.tries = 0;
+  if (resumed) showHostWait();
+  setStatus(resumed ? 'reconnecting' : 'waiting');
+  createHostPeer();
+}
+
+function createHostPeer(){
+  clearTimeout(T.restart);
+  const peer = new Peer(PREFIX + st.code);
+  st.peer = peer;
+  let opened = false;
+  startBeat();
+
+  peer.on('open', () => {
+    if (peer !== st.peer) return;
+    opened = true; st.tries = 0; st.fresh = false;
+    clearTimeout(T.sig);
+    sess.save();
+    if (!st.inRoom){ showHostWait(); setStatus('waiting'); }
+    else setStatus(st.conns.length ? 'online' : 'waiting');
+  });
+  peer.on('connection', conn => { if (peer === st.peer) onGuestConnection(conn); });
+  peer.on('disconnected', () => { if (peer === st.peer) recoverSignaling(peer); });
+  peer.on('close', () => {
+    if (peer !== st.peer || st.closing) return;
+    st.peer = null;
+    if (st.fresh && !opened) return leave('ساخت اتاق ناموفق بود. اتصال اینترنت را بررسی کنید.');
+    scheduleRestart();
+  });
+  peer.on('error', err => {
+    if (peer !== st.peer || st.closing) return;
+    const t = err && err.type;
+    if (FATAL.has(t)) return leave('اتصال به سرویس ارتباط ممکن نیست.');
+    if (t === 'unavailable-id'){
+      if (opened) return recoverSignaling(peer);
+      dropPeer(peer);
+      if (st.fresh && ++st.tries <= 6){ st.code = genCode(); return createHostPeer(); }
+      return scheduleRestart();
+    }
+    // Other errors: PeerJS follows up with 'disconnected' (we reconnect) or 'close' (we restart)
+  });
+}
+
+function scheduleRestart(){
+  if (st.closing) return;
+  if (++st.tries > MAX_TRIES) return leave('اتصال قطع شد و بازیابی اتاق ممکن نشد.');
+  setStatus('reconnecting');
+  clearTimeout(T.restart);
+  T.restart = setTimeout(() => {
+    if (st.closing) return;
+    if (st.role === 'host') createHostPeer();
+  }, Math.min(1000 * st.tries, 6000));
+}
+
+function onGuestConnection(conn){
+  const gid = conn.metadata && typeof conn.metadata.gid === 'string' ? conn.metadata.gid.slice(0, 16) : null;
+
+  const gone = () => {
+    if (conn._replaced) return;
+    const i = st.conns.indexOf(conn);
+    if (i === -1) return;
+    st.conns.splice(i, 1);
+    const text = `${conn._label} از اتاق خارج شد.`;
+    addMsg(text, 'sys');
+    broadcast({ type:'sys', message:text });
+    setStatus(st.conns.length ? 'online' : 'waiting');
+  };
+  conn._gone = gone;
+
+  conn.on('open', () => {
+    conn._seen = Date.now();
+    conn._gid = gid;
+    let label = null, rejoin = false;
+    if (gid){
+      const old = st.conns.find(c => c._gid === gid);
+      if (old){
+        label = old._label; rejoin = true; old._replaced = true;
+        st.conns.splice(st.conns.indexOf(old), 1);
+        closeQuiet(old);
+      }
+    }
+    if (!rejoin && st.conns.length >= MAX_GUESTS){ closeQuiet(conn); return; }
+    conn._label = label || ('مهمان ' + (++st.seq));
+    st.conns.push(conn);
+
+    if (st.url){
+      safeSend(conn, { type:'video', url:st.url });
+      if (st.needState){ safeSend(conn, { type:'req-state' }); st.needState = false; }
+      else if (st.kind === 'yt') safeSend(conn, { type:'playback', playing:st.playing, time:curTime() });
+    }
+
+    enterRoom();
+    const text = rejoin ? `${conn._label} دوباره متصل شد.` : `${conn._label} وارد اتاق شد.`;
+    addMsg(text, 'sys');
+    broadcast({ type:'sys', message:text }, conn);
+    setStatus('online');
+  });
+  conn.on('data', d => onData(d, conn));
+  conn.on('close', gone);
+  conn.on('error', gone);
+}
+
+/* ---------- GUEST ---------- */
+function startGuest(code, resumed){
+  st.closing = false; st.role = 'guest'; st.code = code;
+  st.resumed = resumed; st.tries = 0; st.lostAt = 0;
+  showJoining();
+  setStatus(resumed ? 'reconnecting' : 'waiting');
+  createGuestPeer();
+}
+
+function createGuestPeer(){
+  const peer = new Peer();
+  st.peer = peer;
+  startBeat();
+
+  peer.on('open', () => {
+    if (peer !== st.peer) return;
+    clearTimeout(T.sig);
+    if (!st.hostConn || !st.hostConn.open) connectToHost();
+  });
+  peer.on('disconnected', () => { if (peer === st.peer) recoverSignaling(peer); });
+  peer.on('close', () => {
+    if (peer !== st.peer || st.closing) return;
+    st.peer = null;
+    handleGuestLost(null);
+  });
+  peer.on('error', err => {
+    if (peer !== st.peer || st.closing) return;
+    const t = err && err.type;
+    if (t === 'peer-unavailable') return onHostMissing();
+    if (FATAL.has(t)) return leave('اتصال به سرویس ارتباط ممکن نیست.');
+    if (t === 'webrtc') return handleGuestLost(st.hostConn);
+    // Network/socket errors: PeerJS follows up with 'disconnected' or 'close'
+  });
+}
+
+function connectToHost(){
+  const peer = st.peer;
+  if (!peer || peer.destroyed || peer.disconnected) return;
+  clearTimeout(T.conn);
+  let conn;
+  try { conn = peer.connect(PREFIX + st.code, { reliable:true, metadata:{ gid:st.gid } }); }
+  catch { return handleGuestLost(null); }
+  st.hostConn = conn;
+
+  T.conn = setTimeout(() => {
+    if (conn === st.hostConn && !conn.open){ closeQuiet(conn); handleGuestLost(conn); }
+  }, 10000);
+
+  conn.on('open', () => {
+    if (conn !== st.hostConn){ closeQuiet(conn); return; }
+    clearTimeout(T.conn); clearTimeout(T.retry);
+    conn._seen = Date.now();
+    const wasIn = st.inRoom, wasLost = !!st.lostAt;
+    st.lostAt = 0; st.resumed = false; st.tries = 0;
+    enterRoom();
+    if (!wasIn) addMsg('به اتاق متصل شدید.', 'sys');
+    setStatus('online');
+    sess.save();
+    if (wasIn && wasLost) toast('دوباره به اتاق متصل شدید', 'ok');
+  });
+  conn.on('data', d => onData(d, conn));
+  conn.on('close', () => { if (conn === st.hostConn) handleGuestLost(conn); });
+  conn.on('error', () => { if (conn === st.hostConn) handleGuestLost(conn); });
+}
+
+function onHostMissing(){
+  if (!(st.inRoom || st.resumed)) return leave('اتاقی با این کد پیدا نشد. کد را بررسی کنید.');
+  const c = st.hostConn;
+  handleGuestLost(c || null);
+  closeQuiet(c);
+}
+
+function handleGuestLost(conn){
+  if (st.closing || st.role !== 'guest') return;
+  if (conn && conn !== st.hostConn) return;
+  clearTimeout(T.conn);
+  st.hostConn = null;
+  if (!(st.inRoom || st.resumed))
+    return leave('اتصال به اتاق برقرار نشد. کد را بررسی کنید و مطمئن شوید میزبان در صفحه‌ی اتاق است.');
+  if (!st.lostAt) st.lostAt = Date.now();
+  if (Date.now() - st.lostAt > GUEST_PATIENCE) return leave('ارتباط با میزبان قطع شد.');
+  setStatus('reconnecting');
+  guestRetry(1500);
+}
+
+function guestRetry(delay){
+  clearTimeout(T.retry);
+  T.retry = setTimeout(() => {
+    if (st.closing || st.role !== 'guest') return;
+    if (st.hostConn && st.hostConn.open) return;
+    if (st.lostAt && Date.now() - st.lostAt > GUEST_PATIENCE) return leave('ارتباط با میزبان قطع شد.');
+    const p = st.peer;
+    if (!p || p.destroyed){ st.peer = null; createGuestPeer(); }
+    else if (p.disconnected) recoverSignaling(p);
+    else if (p.open && !st.hostConn) connectToHost();
+    guestRetry(4000);
+  }, delay);
+}
+
 /* ---------- Lifecycle ---------- */
+function clearTimers(){
+  ['sig', 'conn', 'retry', 'restart', 'verify'].forEach(k => { clearTimeout(T[k]); T[k] = null; });
+  clearInterval(T.beat); T.beat = null;
+  clearInterval(yt.hs); yt.hs = null;
+}
+
 function cleanup(){
-  clearTimeout(st.timer);
-  st.conns.forEach(c => { try { c.close(); } catch {} });
-  if (st.hostConn) { try { st.hostConn.close(); } catch {} }
-  if (st.peer) { try { st.peer.destroy(); } catch {} }
-  Object.assign(st, { peer:null, role:null, code:null, conns:[], hostConn:null, inRoom:false, url:'', seq:0, unread:0, chatOpen:false });
+  clearTimers();
+  const conns = st.conns.slice(), hc = st.hostConn, peer = st.peer;
+  if (st.role === 'host') conns.forEach(c => safeSend(c, { type:'bye' }));
+  else if (hc) safeSend(hc, { type:'bye' });
+  st.conns = []; st.hostConn = null; st.peer = null;
+  setTimeout(() => {
+    conns.forEach(closeQuiet);
+    closeQuiet(hc);
+    if (peer){ try { peer.destroy(); } catch {} }
+  }, 250);
+  Object.assign(st, {
+    role:null, code:null, inRoom:false, resumed:false, fresh:false,
+    url:'', kind:null, playing:false, pending:null, mute:0, needState:false,
+    seq:0, unread:0, chatOpen:false, tries:0, lostAt:0
+  });
+  Object.assign(yt, { frame:null, ready:false, state:-1, time:0, timeAt:0 });
 }
 
 function resetRoomUI(){
@@ -509,93 +1024,57 @@ function resetRoomUI(){
 }
 
 function leave(message, type){
+  st.closing = true;
   cleanup();
+  sess.clear();
   resetRoomUI();
   showLobby();
   setStatus(message ? 'off' : 'idle');
   if (message) toast(message, type || 'err');
 }
 
-/* HOST */
-function createRoom(attempt = 0){
-  if (attempt === 0){ cleanup(); el.create.disabled = true; el.join.disabled = true; }
-  st.role = 'host';
-  st.code = genCode();
-  setStatus('waiting');
-  const peer = new Peer(PREFIX + st.code);
-  st.peer = peer;
-
-  peer.on('open', () => {
-    el.bigCode.textContent = st.code;
-    el.lobbyMain.hidden = true; el.hostWait.hidden = false;
-    el.leave.hidden = true;
-  });
-  peer.on('connection', onGuestConnection);
-  peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch {} });
-  peer.on('error', err => {
-    if (err.type === 'unavailable-id' && attempt < 6){
-      try { peer.destroy(); } catch {}
-      return createRoom(attempt + 1);
-    }
-    leave('ساخت اتاق ناموفق بود. اتصال اینترنت را بررسی کنید.');
-  });
+function createRoom(){
+  cleanup(); sess.clear();
+  el.create.disabled = true; el.join.disabled = true;
+  if (!st.gid) st.gid = genGid();
+  startHost(genCode(), false);
 }
 
-function onGuestConnection(conn){
-  conn.on('open', () => {
-    conn._label = 'مهمان ' + (++st.seq);
-    st.conns.push(conn);
-    if (st.url) safeSend(conn, { type:'video', url:st.url });
-    if (st.inRoom){
-      addMsg(`${conn._label} وارد اتاق شد.`, 'sys');
-      broadcast({ type:'chat', message:`${conn._label} وارد اتاق شد.`, from:'سیستم' }, conn);
-    }
-    enterRoom();
-    setStatus('online');
-  });
-  conn.on('data', d => onData(d, conn));
-  const gone = () => {
-    const i = st.conns.indexOf(conn);
-    if (i === -1) return;
-    st.conns.splice(i, 1);
-    addMsg(`${conn._label} از اتاق خارج شد.`, 'sys');
-    setStatus(st.conns.length ? 'online' : 'waiting');
-  };
-  conn.on('close', gone);
-  conn.on('error', gone);
-}
-
-/* GUEST */
 function joinRoom(){
   const code = normDigits(el.codeInput.value).replace(/\D/g, '');
   if (!/^\d{5}$/.test(code)) return toast('کد اتاق باید ۵ رقم باشد', 'err');
-  cleanup();
-  st.role = 'guest';
-  st.code = code;
-  el.create.disabled = true; el.join.disabled = true;
-  setStatus('waiting');
+  cleanup(); sess.clear();
+  if (!st.gid) st.gid = genGid();
+  startGuest(code, false);
+}
 
-  const peer = new Peer();
-  st.peer = peer;
+function resume(s){
+  st.gid = s.gid || genGid();
+  st.url = typeof s.url === 'string' ? s.url : '';
+  toast('در حال بازگشت به اتاق ' + s.code + ' ...', 'ok');
+  if (s.role === 'host'){ st.needState = !!st.url; startHost(s.code, true); }
+  else startGuest(s.code, true);
+}
 
-  peer.on('open', () => {
-    const conn = peer.connect(PREFIX + code, { reliable:true });
-    st.hostConn = conn;
-    st.timer = setTimeout(() => { if (!st.inRoom) leave('اتصال به اتاق برقرار نشد. کد را بررسی کنید.'); }, 12000);
-    conn.on('open', () => { clearTimeout(st.timer); enterRoom(); });
-    conn.on('data', d => onData(d, conn));
-    conn.on('close', () => { if (st.inRoom || st.hostConn) leave('میزبان اتاق را ترک کرد.'); });
-    conn.on('error', () => leave('خطا در ارتباط با میزبان.'));
-  });
-  peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch {} });
-  peer.on('error', err => {
-    if (err.type === 'peer-unavailable') leave('اتاقی با این کد پیدا نشد.');
-    else leave('اتصال ناموفق بود. دوباره تلاش کنید.');
-  });
+/* Called when the user comes back to the tab (e.g., after sending the code in another app) */
+function wake(){
+  if (st.closing || !st.role) return;
+  const t = Date.now();
+  st.conns.forEach(c => { c._seen = t; });
+  if (st.hostConn) st.hostConn._seen = t;
+  const p = st.peer;
+  if (!p || p.destroyed){
+    clearTimeout(T.restart); st.peer = null; st.tries = 0;
+    if (st.role === 'host') createHostPeer();
+    else { if (!st.lostAt) st.lostAt = t; setStatus('reconnecting'); createGuestPeer(); guestRetry(3000); }
+    return;
+  }
+  if (p.disconnected) recoverSignaling(p);
+  if (st.role === 'guest' && st.inRoom && !(st.hostConn && st.hostConn.open)) handleGuestLost(st.hostConn);
 }
 
 /* ---------- Events ---------- */
-el.create.addEventListener('click', () => createRoom());
+el.create.addEventListener('click', createRoom);
 el.join.addEventListener('click', joinRoom);
 el.codeInput.addEventListener('input', () => {
   el.codeInput.value = normDigits(el.codeInput.value).replace(/\D/g, '').slice(0, 5);
@@ -603,31 +1082,55 @@ el.codeInput.addEventListener('input', () => {
 el.codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
 
 $('#cancelBtn').addEventListener('click', () => leave());
+$('#cancelJoinBtn').addEventListener('click', () => leave());
 el.leave.addEventListener('click', () => leave());
+
 const copyCode = () => copyText(st.code, 'کد اتاق کپی شد');
 const copyLink = () => copyText(inviteLink(), 'لینک دعوت کپی شد');
+async function shareRoom(){
+  if (!st.code) return;
+  if (navigator.share){
+    try { await navigator.share({ title:'Film2Taii', text:`به اتاق تماشای Film2Taii بیا! کد اتاق: ${st.code}`, url:inviteLink() }); } catch {}
+  } else copyLink();
+}
 $('#copyCodeBtn').addEventListener('click', copyCode);
 $('#copyCodeBtn2').addEventListener('click', copyCode);
 $('#copyLinkBtn').addEventListener('click', copyLink);
 $('#copyLinkBtn2').addEventListener('click', copyLink);
+el.share1.addEventListener('click', shareRoom);
+el.share2.addEventListener('click', shareRoom);
+if (navigator.share){ el.share1.hidden = false; el.share2.hidden = false; }
 
 el.loadBtn.addEventListener('click', loadVideo);
 el.videoInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
+el.playBtn.addEventListener('click', togglePlay);
+el.seekBack.addEventListener('click', () => seekBy(-10));
+el.seekFwd.addEventListener('click', () => seekBy(10));
+el.syncBtn.addEventListener('click', syncNow);
 
 el.chatSend.addEventListener('click', sendChat);
 el.chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) sendChat(); });
 el.fab.addEventListener('click', () => setChat(true));
 $('#chatClose').addEventListener('click', () => setChat(false));
 
-window.addEventListener('beforeunload', () => { try { st.peer && st.peer.destroy(); } catch {} });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+window.addEventListener('online', wake);
+window.addEventListener('pageshow', wake);
 
-/* Invite link: #12345 pre-fills the join field */
-const h = location.hash.match(/^#(\d{5})$/);
-if (h){ el.codeInput.value = h[1]; el.join.focus(); }
-
+/* ---------- Boot ---------- */
 if (typeof Peer === 'undefined') toast('بارگذاری PeerJS ناموفق بود. اتصال اینترنت را بررسی کنید.', 'err');
 showLobby();
 setStatus('idle');
+
+const saved = sess.load();
+const hash = location.hash.match(/^#(\d{5})$/);
+if (hash && (!saved || saved.code !== hash[1])){
+  sess.clear();
+  el.codeInput.value = hash[1];
+  el.join.focus();
+} else if (saved && typeof Peer !== 'undefined'){
+  resume(saved);
+}
 })();
 </script>
 </body>
